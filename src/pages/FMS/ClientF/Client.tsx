@@ -38,7 +38,7 @@ const Client = () => {
         address2_2: '',
         country2: '',
         state2: '',
-        city2: '',
+        citys2: '',
         pinCode2: '',
         taxRegistrationNumber: '',
     });
@@ -54,11 +54,8 @@ const Client = () => {
         postal_code: Yup.string().required('Pin Code is required'),
         Tax_reg_no: Yup.number().required('Tex Registration Number is required'),
         country: Yup.string().required('Country is required'),
-        address_2_1: Yup.string().required('Address is required'),
-        address_2_2: Yup.string().required('Address is required'),
-        address_1_1: Yup.string().required('Address is required'),
-        address_1_2: Yup.string().required('Address is required'),
-        city2: Yup.string().required('City 2 is required'),
+        address2: Yup.string().required('Address is required'),
+        citys2: Yup.string().required('City 2 is required'),
         state2: Yup.string().required('State 2 is required'),
         postal_code2: Yup.string().required('Pin Code 2 is required'),
         country2: Yup.string().required('Country 2 is required'),
@@ -71,15 +68,13 @@ const Client = () => {
         contact_person: '',
         email: '',
         phone_number: '',
-        address_1_1: '',
-        address_1_2: '',
+        address: '',
         citys: '',
         state: '',
         postal_code: '',
         country: '',
-        address_2_1: '',
-        address_2_2: '',
-        city2: '',
+        address2: '',
+        citys2: '',
         state2: '',
         postal_code2: '',
         country2: '',
@@ -87,6 +82,17 @@ const Client = () => {
         password: '',
         Tax_reg_no: '',
     };
+
+    const temp = async () =>{
+        try {
+            let addUSer = await axios.post(`${config.API_BASE_URL}/client`, formik.values);
+            setAddContactModal(false);
+            showMessage('User has been saved successfully.');
+        } catch (error) {
+            console.log(error);
+            
+        }
+    }
 
     const [userData, setUserData] = useState<any>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -298,35 +304,20 @@ const Client = () => {
                                     <th>Client Name</th>
                                     <th>Contact Person Name</th>
                                     <th>Contect Number</th>
-
-                                    <th>Action</th>
+                                    <th className="!text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredItems.map((contact: any) => {
                                     return (
                                         <tr key={contact.id}>
-                                            <td>
-                                                <div className="flex items-center w-max">
-                                                    {/* {contact.path && (
-                                                        <div className="w-max">
-                                                            <img src={`/assets/images/${contact.path}`} className="h-8 w-8 rounded-full object-cover ltr:mr-2 rtl:ml-2" alt="avatar" />
-                                                        </div>
-                                                    )} */}
-                                                    {!contact.path && contact.company_name && (
-                                                        <div className="grid place-content-center h-8 w-8 ltr:mr-2 rtl:ml-2 rounded-full bg-primary text-white text-sm font-semibold"></div>
-                                                    )}
-                                                    {!contact.path && !contact.company_name && (
-                                                        <div className="border border-gray-300 dark:border-gray-800 rounded-full p-2 ltr:mr-2 rtl:ml-2">
-                                                            <IconUser className="w-4.5 h-4.5" />
-                                                        </div>
-                                                    )}
-                                                    <div>{contact.company_name}</div>
-                                                </div>
-                                            </td>
+                                            
+                                           
+
+                                            <td className="whitespace-nowrap">{contact.client_id}</td>
+                                            <td className="whitespace-nowrap">{contact.company_name}</td>
                                             <td className="whitespace-nowrap">{contact.contact_person}</td>
                                             <td className="whitespace-nowrap">{contact.phone_number}</td>
-                                            <td className="whitespace-nowrap">{contact.email}</td>
                                             <td>
                                                 <div className="flex gap-4 items-center justify-center">
                                                     <button
@@ -643,28 +634,28 @@ const Client = () => {
                                                     <input
                                                         type="text"
                                                         id="address"
-                                                        name="address_1_1"
+                                                        name="address"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_1_1}
+                                                        value={formik.values.address}
                                                     />
-                                                    {formik.touched.address_1_1 && formik.errors.address_1_1 && <div className="text-red-500 text-sm">{formik.errors.address_1_1}</div>}
+                                                    {formik.touched.address && formik.errors.address && <div className="text-red-500 text-sm">{formik.errors.address}</div>}
                                                 </div>
                                                 <div>
                                                     <label htmlFor="address">Address 2</label>
                                                     <input
                                                         type="text"
                                                         id="address"
-                                                        name="address_1_2"
+                                                        name="address"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_1_2}
+                                                        value={formik.values.address}
                                                     />
-                                                    {formik.touched.address_1_2 && formik.errors.address_1_2 && <div className="text-red-500 text-sm">{formik.errors.address_1_2}</div>}
+                                                    {formik.touched.address && formik.errors.address && <div className="text-red-500 text-sm">{formik.errors.address}</div>}
                                                 </div>
                                             </div>
 
@@ -748,46 +739,46 @@ const Client = () => {
                                                     <input
                                                         type="text"
                                                         id="address2"
-                                                        name="address_2_1"
+                                                        name="address2"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_2_1}
+                                                        value={formik.values.address2}
                                                     />
-                                                    {formik.touched.address_2_1 && formik.errors.address_2_1 && <div className="text-red-500 text-sm">{formik.errors.address_2_1}</div>}
+                                                    {formik.touched.address2 && formik.errors.address2 && <div className="text-red-500 text-sm">{formik.errors.address2}</div>}
                                                 </div>
                                                 <div>
                                                     <label htmlFor="address2">Address 2</label>
                                                     <input
                                                         type="text"
                                                         id="address2"
-                                                        name="address_2_2"
+                                                        name="address2"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_2_2}
+                                                        value={formik.values.address2}
                                                     />
-                                                    {formik.touched.address_2_2 && formik.errors.address_2_2 && <div className="text-red-500 text-sm">{formik.errors.address_2_2}</div>}
+                                                    {formik.touched.address2 && formik.errors.address2 && <div className="text-red-500 text-sm">{formik.errors.address2}</div>}
                                                 </div>
                                             </div>
 
                                             {/* City 2 */}
                                             <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div className="mb-4">
-                                                    <label htmlFor="city2">City 2</label>
+                                                    <label htmlFor="citys2">City 2</label>
                                                     <input
                                                         type="text"
-                                                        id="city2"
-                                                        name="city2"
+                                                        id="citys2"
+                                                        name="citys2"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter City"
-                                                        value={formik.values.city2}
+                                                        value={formik.values.citys2}
                                                         className="form-input"
                                                     />
-                                                    {formik.touched.city2 && formik.errors.city2 && <div className="text-red-500 text-sm">{formik.errors.city2}</div>}
+                                                    {formik.touched.citys2 && formik.errors.citys2 && <div className="text-red-500 text-sm">{formik.errors.citys2}</div>}
                                                 </div>
 
                                                 {/* State 2 */}
@@ -873,7 +864,7 @@ const Client = () => {
                                                 {formik.touched.password && formik.errors.password && <div className="text-red-500 text-sm">{formik.errors.password}</div>}
                                             </div>
                                             <div className="flex justify-end items-center mt-8">
-                                                <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4">
+                                                <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={temp}>
                                                     Submit
                                                 </button>
                                                 <button type="button" onClick={handleReset} className="btn btn-danger ltr:ml-4 rtl:mr-4">

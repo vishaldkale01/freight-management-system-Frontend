@@ -24,8 +24,7 @@ const Customer = () => {
         contact_person: '',
         email: '',
         phone_number: '',
-        address_1_1: '',
-        address_1_2: '',
+        address: '',
         citys: '',
         state: '',
         postal_code: '',
@@ -33,8 +32,7 @@ const Customer = () => {
         username: '',
         password: '',
         credit_limit: '',
-        address_2_1: '',
-        address_2_2: '',
+        address2: '',
         country2: '',
         state2: '',
         city2: '',
@@ -113,10 +111,6 @@ const Customer = () => {
         address2: Yup.string().required('Address2 is required'),
         citys2: Yup.string().required('City2 is required'),
         state2: Yup.string().required('State2 is required'),
-        address_2_1: Yup.string().required('Address is required'),
-        address_2_2: Yup.string().required('Address is required'),
-        address_1_1: Yup.string().required('Address is required'),
-        address_1_2: Yup.string().required('Address is required'),
         postal_code2: Yup.number().required('Pin code 2 is required'),
         country2: Yup.string().required('Country2 is required'),
         username: Yup.string().required('Username is required'),
@@ -130,14 +124,12 @@ const Customer = () => {
         email: '',
         phone: '',
         Tax_reg_no: '',
-        address_1_1: '',
-        address_1_2: '',
+        address: '',
         citys: '',
         state: '',
         postal_code: '',
         country: '',
-        address_2_1: '',
-        address_2_2: '',
+        address2: '',
         citys2: '',
         state2: '',
         postal_code2: '',
@@ -176,6 +168,27 @@ const Customer = () => {
     const handleReset = () => {
         formik.resetForm();
     };
+
+    const temp = async () =>{
+        try {
+            console.log('Form submitted with values:', formik.values);
+            const Data = await axios.post(`${config.API_BASE_URL}/customers`, formik.values);
+            console.log(Data);
+
+            if (Data.status === 201) {
+                showMessage(`New customer created`);
+                formik.resetForm();
+                setAddContactModal(false);
+            } else {
+            }
+        } catch (error: any) {
+            if (error.response.data.message) console.log(error.response.data.message);
+            Object.values(error.response.data.message).map((m: any) => {
+                showMessage(m);
+            });
+            console.log('something erroror', error);
+        }
+    }
 
     //       const onSubmit = (values, { setSubmitting }) => {
     //   // Your form submission logic here
@@ -302,8 +315,8 @@ const Customer = () => {
                                     <th>Customer Name</th>
                                     <th>Contact person</th>
                                     <th>Phone</th>
+                                    <th>Addres</th>
                                     <th>Credit Limit</th>
-                                    <th>Limit Used</th>
                                     <th>balance</th>
                                     <th className="!text-center">Actions</th>
                                 </tr>
@@ -312,7 +325,7 @@ const Customer = () => {
                                 {filteredItems.map((contact: any) => {
                                     return (
                                         <tr key={contact.id}>
-                                            <td>
+                                            {/* <td>
                                                 <div className="flex items-center w-max">
                                                     {contact.path && (
                                                         <div className="w-max">
@@ -329,11 +342,12 @@ const Customer = () => {
                                                     )}
                                                     <div>{contact.company_name}</div>
                                                 </div>
-                                            </td>
-                                            <td>{contact.email}</td>
+                                            </td> */}
+                                            <td className="whitespace-nowrap">{contact.customer_id}</td>
+                                            <td className="whitespace-nowrap">{contact.company_name}</td>
+                                            <td className="whitespace-nowrap">{contact.contact_person}</td>
+                                            <td className="whitespace-nowrap">{contact.phone}</td>
                                             <td className="whitespace-nowrap">{contact.address}</td>
-                                            <td className="whitespace-nowrap">{contact.phone_number}</td>
-                                            <td className="whitespace-nowrap">{contact.email}</td>
                                             <td className="whitespace-nowrap">{contact.credit_limit}</td>
                                             <td className="whitespace-nowrap">{contact.balance}</td>
                                             <td>
@@ -367,7 +381,7 @@ const Customer = () => {
                                                     </button>
                                                     <div>
                                                         {/* Button trigger modal */}
-                                                        <button
+                                                        {/* <button
                                                             type="button"
                                                             className="inline-block rounded bg-primary px-6 pb-2 pt-2.5 text-xs font-medium uppercase leading-normal text-white shadow-[0_4px_9px_-4px_#3b71ca] transition duration-150 ease-in-out hover:bg-primary-600 hover:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] focus:bg-primary-600 focus:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] focus:outline-none focus:ring-0 active:bg-primary-700 active:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.3),0_4px_18px_0_rgba(59,113,202,0.2)] dark:shadow-[0_4px_9px_-4px_rgba(59,113,202,0.5)] dark:hover:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)] dark:focus:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)] dark:active:shadow-[0_8px_9px_-4px_rgba(59,113,202,0.2),0_4px_18px_0_rgba(59,113,202,0.1)]"
                                                             data-te-toggle="modal"
@@ -376,7 +390,7 @@ const Customer = () => {
                                                             data-te-ripple-color="light"
                                                         >
                                                             View
-                                                        </button>
+                                                        </button> */}
                                                         {/* Modal */}
                                                         <div
                                                             data-te-modal-init
@@ -630,7 +644,7 @@ const Customer = () => {
                                                 <div>
                                                     <label htmlFor="Tax_reg_no">Tax Registration Number</label>
                                                     <input
-                                                        type="number"
+                                                        type="text"
                                                         id="Tax_reg_no"
                                                         name="Tax_reg_no"
                                                         onChange={formik.handleChange}
@@ -654,28 +668,28 @@ const Customer = () => {
                                                     <input
                                                         type="text"
                                                         id="address"
-                                                        name="address_1_1"
+                                                        name="address"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_1_1}
+                                                        value={formik.values.address}
                                                     />
-                                                    {formik.touched.address_1_1 && formik.errors.address_1_1 && <div className="text-red-500 text-sm">{formik.errors.address_1_1}</div>}
+                                                    {formik.touched.address && formik.errors.address && <div className="text-red-500 text-sm">{formik.errors.address}</div>}
                                                 </div>
                                                 <div>
                                                     <label htmlFor="address">Address 2</label>
                                                     <input
                                                         type="text"
                                                         id="address"
-                                                        name="address_1_2"
+                                                        name="address"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_1_2}
+                                                        value={formik.values.address}
                                                     />
-                                                    {formik.touched.address_1_2 && formik.errors.address_1_2 && <div className="text-red-500 text-sm">{formik.errors.address_1_2}</div>}
+                                                    {formik.touched.address && formik.errors.address && <div className="text-red-500 text-sm">{formik.errors.address}</div>}
                                                 </div>
                                             </div>
                                             <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4">
@@ -752,28 +766,28 @@ const Customer = () => {
                                                     <input
                                                         type="text"
                                                         id="address2"
-                                                        name="address_2_1"
+                                                        name="address2"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_2_1}
+                                                        value={formik.values.address2}
                                                     />
-                                                    {formik.touched.address_2_1 && formik.errors.address_2_1 && <div  className="text-red-500 text-sm">{formik.errors.address_2_1}</div>}
+                                                    {formik.touched.address2 && formik.errors.address2 && <div  className="text-red-500 text-sm">{formik.errors.address2}</div>}
                                                 </div>
                                                 <div>
                                                     <label htmlFor="address2">Address 2</label>
                                                     <input
                                                         type="text"
                                                         id="address2"
-                                                        name="address_2_2"
+                                                        name="address2"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         placeholder="Enter Address"
                                                         className="form-input"
-                                                        value={formik.values.address_2_2}
+                                                        value={formik.values.address2}
                                                     />
-                                                    {formik.touched.address_2_2 && formik.errors.address_2_2 && <div  className="text-red-500 text-sm">{formik.errors.address_2_2}</div>}
+                                                    {formik.touched.address2 && formik.errors.address2 && <div  className="text-red-500 text-sm">{formik.errors.address2}</div>}
                                                 </div>
                                             </div>
                                             <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4">
@@ -885,7 +899,7 @@ const Customer = () => {
                                             </div>
 
                                             <div className="flex justify-end items-center mt-8">
-                                                <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4">
+                                                <button type="submit" onClick={temp} className="btn btn-primary ltr:ml-4 rtl:mr-4">
                                                     Submit
                                                 </button>
                                                 <button type="button" onClick={handleReset} className="btn btn-danger ltr:ml-4 rtl:mr-4">

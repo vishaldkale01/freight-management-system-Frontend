@@ -169,9 +169,15 @@ const City = () => {
         validationSchema: validationSchema,
         onSubmit: (values) => {
             // Handle form submission logic here
-            console.log(values);
+            console.log(values, 'formikValues');
         },
     });
+
+    const temp = async () => {
+        let data = await axios.post(`${config.API_BASE_URL}/location/citys`, formik.values);
+        data.status === 201 ? showMessage('City has been saved successfully.') : '';
+        setAddContactModal(false);
+    };
     return (
         <div>
             <div className="flex items-center justify-between flex-wrap gap-4">
@@ -371,7 +377,7 @@ const City = () => {
                                                     id="ctnSelect4"
                                                     name="country_id"
                                                     onChange={(e) => {
-                                                        params.country_id = e.target.value;
+                                                        formik.values.country_id = e.target.value;
                                                         console.log(stateData, 'state>>>>>>>>>>>>>>>>', e.target.value, 'e.target.value');
 
                                                         const filterState__ = stateData.filter((id: any) => id.country_id === parseInt(e.target.value));
@@ -383,7 +389,7 @@ const City = () => {
                                                 >
                                                     <option>Select Country</option>
                                                     {stateData.map((country: any) => (
-                                                        <option key={country.country_id} value={(params.country_id = country.country_id)}>
+                                                        <option key={country.country_id} value={country.country_id}>
                                                             {country.country.country_name}
                                                         </option>
                                                     ))}
@@ -392,10 +398,17 @@ const City = () => {
                                             </div>
                                             <div className="mt-4">
                                                 <label htmlFor="ctnSelect1">Select State</label>
-                                                <select id="ctnSelect1" name="state_id" onChange={(e) => changeValue(e)} value={params.state_id} className="form-select text-white-dark" required>
+                                                <select
+                                                    id="ctnSelect1"
+                                                    name="state_id"
+                                                    onChange={formik.handleChange}
+                                                    value={formik.values.state_id}
+                                                    className="form-select text-white-dark"
+                                                    required
+                                                >
                                                     <option>Select State</option>
                                                     {filterState.map((state: any) => (
-                                                        <option key={state.state_id} value={(params.state_id = state.state_id)}>
+                                                        <option key={state.state_id} value={state.state_id}>
                                                             {state.state_name}
                                                         </option>
                                                     ))}
@@ -423,7 +436,7 @@ const City = () => {
                                                     <button type="button" className="btn btn-outline-danger" onClick={() => setAddContactModal(false)}>
                                                         Cancel
                                                     </button>
-                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4">
+                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={temp}>
                                                         {params.city_id ? 'Update' : 'Submit'}
                                                     </button>
                                                     <button type="button" className="btn btn-danger ltr:ml-4 rtl:mr-4" onClick={formik.handleReset}>

@@ -21,18 +21,14 @@ import { Modal, Button } from '@mantine/core';
 const Booking = () => {
     const dispatch = useDispatch();
     const [defaultParams] = useState({
-        booking_id: '',
+        booking_id: 0,
         date: '',
         route_id: 0,
-        customer: '',
         client_id: 0,
-        route_name: '',
-        route_fare: '',
-        all_border_fare: '',
-        total_ammount: '',
-        driver: '',
+        route_fare: 0,
+        all_border_fare: 0,
+        total_ammount: 0,
         ammount_to_driver: '',
-        status: '',
         customer_id: 0,
         driver_id: 0,
     });
@@ -41,13 +37,27 @@ const Booking = () => {
     const [clientData, setClientData] = useState<any>([]);
     const [driverData, setDriverData] = useState<any>([]);
     const [routeData, setRouteData] = useState<any>([]);
+    const [bookingsData, setBookingsData] = useState<any>([]);
+    const [filterrouteData, setFilterrouteData] = useState<any>([]);
     const [isLoading, setIsLoading] = useState<any>(true);
     const [opened, { open, close }] = useDisclosure(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [showDriverInfo, setShowDriverInfo] = useState(false);
 
     const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
     const [addContactModal, setAddContactModal] = useState<any>(false);
     const [viewContactModal, setViewContactModal] = useState<any>(false);
+    const [currentDate, setCurrentDate] = useState(getFormattedDate());
+
+    // Helper function to get the current date in "YYYY-MM-DD" format
+    function getFormattedDate() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        params.date = today;
+        return `${year}-${month}-${day}`;
+    }
 
     console.log(params, 'params>>>>>>>>>>>>>>>');
     useEffect(() => {
@@ -74,6 +84,11 @@ const Booking = () => {
 
             setUserData(responce.data);
             console.log(userData);
+
+            const bookings = await axios.get(`${config.API_BASE_URL}/bookings`);
+            console.log(bookings.data.data, '\\\\\\\\');
+
+            setBookingsData(bookings.data.data);
         };
         fetch();
     }, [addContactModal]);
@@ -101,17 +116,16 @@ const Booking = () => {
                 return item.name.toLowerCase().includes(search.toLowerCase());
             });
         });
-    }, [search, contactList, userData]);
+    }, [search, contactList, userData, params]);
     contactList = userData;
 
-    const saveUser = async () => {
-        if (Object.values(params).some((x) => x === null || x === '')) {
-            showMessage('somthing  is missing', 'error');
-            return true;
-        }
-
-        console.log(params, 'paraams >>>>>>>>>>>>>>>>>');
-        if (params.client_id) {
+    const saveUser = async (e: any) => {
+        e.preventDefault();
+        console.log('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', params);
+        let addUSer = await axios.post(`${config.API_BASE_URL}/bookings`, params);
+        setAddContactModal(false);
+        showMessage('User has been saved successfully.');
+        if (false) {
             //update user
 
             delete params.id;
@@ -142,11 +156,7 @@ const Booking = () => {
             delete params.location;
             // params.params.id = 10000
             params.username = params.phone_number;
-            let addUSer = await axios.post('http://localhost:3004/api/client', params);
-            setAddContactModal(false);
-            showMessage('User has been saved successfully.');
         }
-        setAddContactModal(false);
     };
 
     const editUser = async (user: any = null) => {
@@ -189,6 +199,18 @@ const Booking = () => {
             padding: '10px 20px',
         });
     };
+
+    function generateBookingNumber() {
+        const prefix = 'BOOK';
+        const timestamp = new Date().getTime(); // Get the current timestamp
+        const randomSuffix = Math.floor(Math.random() * 1000); // Generate a random number
+
+        const bookingNumber = `${prefix}-${timestamp}-${randomSuffix}`;
+
+        return bookingNumber;
+    }
+
+    const filterRoute = (route: any) => {};
 
     return (
         <div>
@@ -248,29 +270,20 @@ const Booking = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredItems.map((contact: any) => {
+                                {bookingsData.map((contact: any) => {
                                     return (
                                         <tr key={contact.id}>
-                                            <td>
-                                                <div className="flex items-center w-max">
-                                                    {contact.path && (
-                                                        <div className="w-max">
-                                                            <img src={`/assets/images/${contact.path}`} className="h-8 w-8 rounded-full object-cover ltr:mr-2 rtl:ml-2" alt="avatar" />
-                                                        </div>
-                                                    )}
-                                                    {!contact.path && contact.company_name && (
-                                                        <div className="grid place-content-center h-8 w-8 ltr:mr-2 rtl:ml-2 rounded-full bg-primary text-white text-sm font-semibold"></div>
-                                                    )}
-                                                    {!contact.path && !contact.company_name && (
-                                                        <div className="border border-gray-300 dark:border-gray-800 rounded-full p-2 ltr:mr-2 rtl:ml-2">
-                                                            <IconUser className="w-4.5 h-4.5" />
-                                                        </div>
-                                                    )}
-                                                    <div>{contact.name}</div>
-                                                </div>
-                                            </td>
-                                            <td className="whitespace-nowrap">{contact.contactNumber}</td>
-                                            <td className="whitespace-nowrap">{contact.email}</td>
+                                            <td className="whitespace-nowrap">{contact.booking_id}</td>
+                                            <td className="whitespace-nowrap">{contact.customer.company_name}</td>
+                                            <td className="whitespace-nowrap">{contact.new_booking_id}</td>
+                                            <td className="whitespace-nowrap">{contact.date}</td>
+                                            <td className="whitespace-nowrap">{contact.border_Route.route_name}</td>
+                                            <td className="whitespace-nowrap">{contact.total_ammount}</td>
+                                            <td className="whitespace-nowrap">{contact.ammount_to_driver}</td>
+                                            <td className="whitespace-nowrap">{contact.status}</td>
+                                            <td className="whitespace-nowrap">{contact.status}</td>
+                                            <td className="whitespace-nowrap">{contact.status}</td>
+                                            <td className="whitespace-nowrap">{contact.status}</td>
                                             <td className="whitespace-nowrap">{contact.status}</td>
                                             <td>
                                                 <div className="flex gap-4 items-center justify-center">
@@ -412,209 +425,254 @@ const Booking = () => {
                                         {params.client ? 'Edit Contact' : 'Add Booking'}
                                     </div>
                                     <div className="p-5">
-                                        <form>
-                                            <div>
-                                                <label htmlFor="routename">Booking Id</label>
-                                                <input
-                                                    id="booking_id"
-                                                    name="booking_id"
-                                                    onChange={(e) => changeValue(e)}
-                                                    value={params.booking_id}
-                                                    type="text"
-                                                    placeholder="Enter Booking Id"
-                                                    className="form-input"
-                                                    required
-                                                />
-                                            </div>
+                                        <form onSubmit={(e) => saveUser(e)}>
+                                            {/* <div> */}
                                             <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label htmlFor="routename">Date</label>
-                                                    <input id="" type="date" onChange={(e) => changeValue(e)} value={params.date} name="date" placeholder="--/--/--" className="form-input" required />
-                                                </div>
-
-                                                <div>
-                                                    <label htmlFor="">Select Route Name</label>
-                                                    <select
-                                                        name="country_id"
+                                                    <label htmlFor="routename">Booking Id</label>
+                                                    <input
+                                                        id="booking_id"
+                                                        name="booking_id"
                                                         onChange={(e) => changeValue(e)}
-                                                        placeholder="Enter Country"
-                                                        id="ctnSelect1"
-                                                        className="form-select text-white-dark"
+                                                        value={(params.booking_id = generateBookingNumber())}
+                                                        type="text"
+                                                        placeholder="Enter Booking Id"
+                                                        className="form-input"
                                                         required
-                                                    >
-                                                        <option>Select Route Name</option>
-                                                        {routeData.map((country: any) => (
-                                                            <option key={country.route_id} value={(params.route_id = country.route_id)}>
-                                                                {country.route_name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    />
                                                 </div>
+                                                <div>
+                                                    <label htmlFor="routename">Date</label>
+                                                    <input id="" type="date" onChange={(e) => setCurrentDate(e.target.value)} value={currentDate} name="date" className="form-input" required />
+                                                </div>
+                                                {/* </div> */}
                                             </div>
 
                                             {
                                                 <div className="mt-4">
                                                     <div>
-                                                        <label htmlFor="">Select Customer</label>
-                                                        {customerData.map((country: any) => (
-                                                            <div>
-                                                                <select
-                                                                    name="customer"
-                                                                    onChange={(e) => changeValue(e)}
-                                                                    value={params.customer}
-                                                                    onClick={() => (params.customer_id = country.customer_id)}
-                                                                    className="form-select text-white-dark"
-                                                                    required
-                                                                >
-                                                                    <option key={country.route_id} value={params.customer_id}>
-                                                                        {country.company_name}
-                                                                    </option>
-                                                                </select>
-                                                                {params.customer_id != 0 ? (
-                                                                    <div className="flex">
-                                                                        <label className="mr-4 font-bold text-blue-500">credit limit : {country.credit_limit}</label>
-                                                                        <label className="mr-4 font-bold text-green-500">use credi t: {0}</label>
-                                                                        <label className="mr-4 font-bold text-red-500">balance : {country.balance}</label>
-                                                                    </div>
-                                                                ) : (
-                                                                    ''
+                                                        <label htmlFor="routename">Select Customer</label>
+                                                        <select name="customer_id" onChange={(e) => changeValue(e)} className="form-select text-white-dark" value={params.customer_id} required>
+                                                            <option value={0}>Select Customer</option>
+                                                            {customerData.map((customer: any) => (
+                                                                <option key={customer.customer_id} value={parseInt(customer.customer_id)}>
+                                                                    {customer.company_name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {params.customer_id != 0 ? (
+                                                            <div className="flex">
+                                                                <h1></h1>
+                                                                {customerData.map((value: any) =>
+                                                                    value.customer_id === parseInt(params.customer_id) ? (
+                                                                        <div className="flex">
+                                                                            <label className="ml-8 mt-2 font-bold text-blue-500">Balance: {value.balance}</label>
+                                                                            <label className="ml-8 mt-2 font-bold text-green-500">Credit Limit: {value.credit_limit}</label>
+                                                                            <label className="ml-8 mt-2 font-bold text-red-500">Credit Use: {0}</label>
+                                                                        </div>
+                                                                    ) : (
+                                                                        ''
+                                                                    )
                                                                 )}
                                                             </div>
-                                                        ))}
+                                                        ) : (
+                                                            ''
+                                                        )}
                                                     </div>
                                                 </div>
                                             }
                                             {/* <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4"> */}
                                             <div>
                                                 <label htmlFor="">Client</label>
-                                                {clientData.map((client: any) => (
-                                                    <div>
-                                                        <select
-                                                            name="customer"
-                                                            onChange={(e) => changeValue(e)}
-                                                            onClick={() => (params.client_id = client.client_id)}
-                                                            className="form-select text-white-dark"
-                                                            required
-                                                        >
-                                                            <option value="0">Select client</option>
-                                                            <option key={client.client_id} value={params.client_ids}>
+                                                <div>
+                                                    <select
+                                                        name="client_id"
+                                                        onChange={(e) => changeValue(e)}
+                                                        value={params.client_id}
+                                                        // onClick={() => (params.client_id = client.client_id)}
+                                                        className="form-select text-white-dark"
+                                                        required
+                                                    >
+                                                        <option value="0">Select client</option>
+                                                        {clientData.map((client: any) => (
+                                                            <option key={client.client_id} value={parseInt(client.client_id)}>
                                                                 {client.company_name}
                                                             </option>
-                                                        </select>
-                                                        {params.client_id != 0 ? (
-                                                            <div className="flex">
-                                                                <label className="mr-4 font-bold text-blue-500">contact_person : {client.contact_person}</label>
-                                                                <label className="mr-4 font-bold text-green-500">phone_number : {client.phone_number}</label>
-                                                                {/* <label className="mr-4 font-bold text-red-500">balance : {client.balance}</label> */}
-                                                            </div>
-                                                        ) : (
-                                                            ''
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                        ))}
+                                                    </select>
+                                                    {params.client_id != 0 ? (
+                                                        <div>
+                                                            {clientData.map((client: any) =>
+                                                                client.client_id === parseInt(params.client_id) ? (
+                                                                    <div className="flex">
+                                                                        <label className="ml-8 mt-2 font-bold text-blue-500"> Name : {client.contact_person}</label>
+                                                                        <label className="ml-8 mt-2 font-bold text-green-500">phone_number : {client.phone_number}</label>
+                                                                        {/* <label className="mr-4 font-bold text-red-500">balance : {client.balance}</label> */}
+                                                                    </div>
+                                                                ) : (
+                                                                    ''
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        ''
+                                                    )}
+                                                </div>
                                             </div>
+
+                                            <div className="mt-4">
+                                                <label htmlFor="routename">Select Driver</label>
+                                                {driverData && (
+                                                    <div>
+                                                        <div>
+                                                            <select name="driver_id" onChange={(e) => changeValue(e)} id="1" className="form-select text-white-dark" value={params.driver_id} required>
+                                                                <option value={0}>select Drive</option>
+                                                                {driverData.map((d: any) => (
+                                                                    <option key={d.driver_id} value={d.driver_id}>
+                                                                        {d.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+
+                                                            {driverData.map((d: any) =>
+                                                                d.driver_id === parseInt(params.driver_id) ? (
+                                                                    <div>
+                                                                        <table className="table-auto">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td className="pr-4 font-bold text-blue-500">Driver Licence:</td>
+                                                                                    <td className="pr-4 font-bold text-green-500">{d.drivingLicenseNumber}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td className="pr-4 font-bold text-blue-500">LIC EXPIRED AT:</td>
+                                                                                    <td className="pr-4 font-bold text-green-500">
+                                                                                        {new Date(d.drivingLicenseExpiryDate).toLocaleDateString('en-GB').split('/').join('-')}
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td className="pr-4 font-bold text-blue-500">Truck Type:</td>
+                                                                                    <td className="pr-4 font-bold text-green-500">{d.truckType}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td className="pr-4 font-bold text-blue-500">Truck Number:</td>
+                                                                                    <td className="pr-4 font-bold text-green-500">{d.truckNumber}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td className="pr-4 font-bold text-blue-500">Status:</td>
+                                                                                    <td className="pr-4 font-bold text-green-500">{d.status}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td className="pr-4 font-bold text-blue-500">Remark:</td>
+                                                                                    <td className="pr-4 font-bold text-green-500">{d.remark}</td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                ) : (
+                                                                    ''
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             <div className="mt-4">
                                                 <div>
                                                     <label htmlFor="">Select Route Name</label>
-                                                    <select name="route_name" onChange={(e) => changeValue(e)} value={params.route_name} className="form-select text-white-dark" required>
-                                                        <option value="">Select Route Name</option>
-                                                        <option value="c1">c1</option>
-                                                        <option value="c2">c2</option>
+                                                    <select
+                                                        name="route_id"
+                                                        onChange={(e) => {
+                                                            params.route_id = parseInt(e.target.value);
+                                                            const selectedRouteData = routeData.find((route: any) => route.route_id === parseInt(params.route_id));
+                                                            setFilterrouteData(selectedRouteData);
+                                                            params.route_fare = selectedRouteData.totalFare;
+                                                            const all_border_fare = Array.isArray(selectedRouteData.borders)
+                                                                ? selectedRouteData.borders.reduce((acc: any, border: any) => acc + border.charges, 0)
+                                                                : 0;
+                                                            console.log(all_border_fare, 'all_border_fareall_border_fareall_border_fare');
+                                                            params.all_border_fare = all_border_fare;
+                                                            console.log('>>>>>>>>>>>>>>>>>>>>> filterrouteData', filterrouteData, parseInt(e.target.value), params.route_id);
+                                                            // console.log(selectedRouteData, parseInt(e.target.value), params.route_id);
+                                                        }}
+                                                        placeholder="Enter Country"
+                                                        id="ctnSelect1"
+                                                        className="form-select text-white-dark"
+                                                        required
+                                                    >
+                                                        <option value={0}>Select Route Name</option>
+                                                        {routeData.map((country: any) => (
+                                                            <option key={country.route_id} value={country.route_id}>
+                                                                {country.route_name}
+                                                            </option>
+                                                        ))}
                                                     </select>
                                                 </div>
-                                            </div>
-                                            <div className='mt-4'>
-                                                <label htmlFor="routename">Select Driver</label>
-                                                {driverData.map((d:any ) => (
-                                                    <div>
-                                                        <select name="driver" onChange={(e) => changeValue(e)} value={params.driver_id} className="form-select text-white-dark" required>
-                                                            <option key={1} value={params.driver_id = 0}>select Driver </option>
-                                                            <option key={1} value={params.driver_id = d.driver_id}>
-                                                                {d.name}
-                                                            </option>
-                                                        </select>
-                                                        { params.driver_id != 0
-                                                        ? <div >
-                                                        <table className="table-auto">
+                                                {/* Table displaying selected route data */}
+
+                                                {params.route_id != 0 && (
+                                                    <div className="overflow-x-auto">
+                                                        <table className="min-w-full table-auto">
+                                                            <thead>
+                                                                <tr>
+                                                                    {/* Customize the table headers based on your data structure */}
+                                                                    <th className="border p-4">Border Name</th>
+                                                                    <th className="border p-4">border type</th>
+                                                                    <th className="border p-4">border charges</th>
+                                                                    {/* Add more headers as needed */}
+                                                                </tr>
+                                                            </thead>
                                                             <tbody>
-                                                                <tr>
-                                                                    <td className="pr-4 font-bold text-blue-500">Driver Licence:</td>
-                                                                    <td className="pr-4 font-bold text-green-500">{d.drivingLicenseNumber}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="pr-4 font-bold text-blue-500">LIC EXPIRED AT:</td>
-                                                                    <td className="pr-4 font-bold text-green-500">{d.drivingLicenseExpiryDate}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="pr-4 font-bold text-blue-500">Truck Type:</td>
-                                                                    <td className="pr-4 font-bold text-green-500">{d.truckType}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="pr-4 font-bold text-blue-500">Truck Number:</td>
-                                                                    <td className="pr-4 font-bold text-green-500">{d.truckNumber}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="pr-4 font-bold text-blue-500">Status:</td>
-                                                                    <td className="pr-4 font-bold text-green-500">{d.status}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="pr-4 font-bold text-blue-500">Remark:</td>
-                                                                    <td className="pr-4 font-bold text-green-500">{d.remark}</td>
-                                                                </tr>
+                                                                {Array.isArray(filterrouteData.borders)
+                                                                    ? filterrouteData.borders.map((i: any) => (
+                                                                          <tr key={i.borderName}>
+                                                                              {/* Display data corresponding to the selected route */}
+                                                                              <td className="border p-4">{i.borderName}</td>
+                                                                              <td className="border p-4">{i.type}</td>
+                                                                              <td className="border p-4">{i.charges}</td>
+                                                                              {/* Add more cells as needed */}
+                                                                          </tr>
+                                                                      ))
+                                                                    : ''}
                                                             </tbody>
                                                         </table>
                                                     </div>
-                                                        : ""
-                                                    }
-                                                    </div>
-                                                ))}
+                                                )}
                                             </div>
-                                           
-                                            {/* </div> */}
-                                          
-                                            
-                                           
-                                                <div>
-                                                    <label htmlFor="">Select Route Fare</label>
-                                                    <select name="route_fare" onChange={(e) => changeValue(e)} value={params.route_fare} className="form-select text-white-dark" required>
-                                                        <option value="">Select Route Fare</option>
-                                                        <option value="c1">c1</option>
-                                                        <option value="c2">c2</option>
-                                                    </select>
-                                               
-                                               
-                                            </div>
-                                            <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4">
 
-                                            <div>
+                                            {/* </div> */}
+
+                                            <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
                                                     <label htmlFor="routename">Route Fare</label>
                                                     <input
                                                         id="booking_id"
                                                         name="route_fare"
                                                         onChange={(e) => changeValue(e)}
                                                         value={params.route_fare}
-                                                        type="text"
+                                                        type="number"
                                                         placeholder="Enter Route Fare"
                                                         className="form-input"
                                                         required
                                                     />
                                                 </div>
                                                 <div>
-                                                <label htmlFor="routename">Border Fare</label>
-                                                <input
-                                                    id="border_fare"
-                                                    name="all_border_fare"
-                                                    onChange={(e) => changeValue(e)}
-                                                    value={params.all_border_fare}
-                                                    type="text"
-                                                    placeholder="Enter All Border Fare"
-                                                    className="form-input"
-                                                    required
-                                                />
+                                                    <label htmlFor="routename">Border Fare</label>
+                                                    <input
+                                                        id="border_fare"
+                                                        name="all_border_fare"
+                                                        onChange={(e) => changeValue(e)}
+                                                        value={params.all_border_fare}
+                                                        type="number"
+                                                        readOnly
+                                                        placeholder="Enter All Border Fare"
+                                                        className="form-input"
+                                                        required
+                                                    />
+                                                </div>
                                             </div>
-                                            </div>
-                                           
-                                            <div className="mt-4">
+
+                                            {/* <div className="mt-4">
                                                 <label htmlFor="routename">Border Details</label>
                                                 <input
                                                     id="border_fare"
@@ -626,7 +684,7 @@ const Booking = () => {
                                                     className="form-input"
                                                     required
                                                 />
-                                            </div>
+                                            </div> */}
 
                                             <div className="mt-4">
                                                 <div>
@@ -634,7 +692,7 @@ const Booking = () => {
                                                     <input
                                                         id="ammount_to_driver"
                                                         onChange={(e) => changeValue(e)}
-                                                        value={params.ammount_to_driver}
+                                                        value={parseInt(params.ammount_to_driver)}
                                                         type="number"
                                                         name="ammount_to_driver"
                                                         placeholder="Enter Ammount To Driver"
@@ -649,16 +707,16 @@ const Booking = () => {
                                                     <input
                                                         id="total_ammount"
                                                         onChange={(e) => changeValue(e)}
-                                                        value={params.total_ammount}
+                                                        value={(params.total_ammount = parseInt(params.route_fare) + parseInt(params.all_border_fare) + parseInt(params.ammount_to_driver))}
                                                         type="number"
                                                         name="total_ammount"
+                                                        readOnly
                                                         placeholder="Enter Total Ammount"
                                                         className="form-input"
                                                         required
                                                     />
                                                 </div>
                                             </div>
-                                            
 
                                             {!viewContactModal && (
                                                 <div className="flex justify-end items-center mt-8">
@@ -666,12 +724,12 @@ const Booking = () => {
                                                         Cancel
                                                     </button>
                                                     <div className="flex gap-4 items-center justify-center">
-                                                    <button
-                                                        onClick={() => setIsOpen(!isOpen)}
-                                                        className="bg-success ltr:ml-4 rtl:mr-4 text-white font-semibold px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300"
-                                                    >
-                                                        view
-                                                    </button>
+                                                        <button
+                                                            onClick={() => setIsOpen(!isOpen)}
+                                                            className="bg-success ltr:ml-4 rtl:mr-4 text-white font-semibold px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300"
+                                                        >
+                                                            view
+                                                        </button>
                                                     </div>
 
                                                     {/* Pop-up Box */}
@@ -688,8 +746,8 @@ const Booking = () => {
                                                             </div>
                                                         </div>
                                                     )}
-                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={saveUser}>
-                                                        {params.driver_id ? 'Update' : 'Submit'}
+                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4">
+                                                        Submit
                                                     </button>
                                                 </div>
                                             )}

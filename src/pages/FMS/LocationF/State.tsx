@@ -23,7 +23,7 @@ const State = () => {
     const [defaultParams] = useState({
         country_id: '',
         state_name: '',
-        country_name : ""
+        country_name: '',
     });
     const [userData, setUserData] = useState<any>([]);
     const [CountryData, setCountryData] = useState<any>([]);
@@ -39,8 +39,8 @@ const State = () => {
             setUserData(data);
             console.log('0000000000000', data);
             const country = await axios.get(`${config.API_BASE_URL}/location/countries`);
-            setCountryData(country.data)
-            console.log("....................",country.data);
+            setCountryData(country.data);
+            console.log('....................', country.data);
         };
         fetch();
     }, [addContactModal]);
@@ -60,8 +60,7 @@ const State = () => {
     let [contactList] = useState<any>(userData);
 
     const [filteredItems, setFilteredItems] = useState<any>(userData);
-    console.log("00000000000000000000000000",filteredItems, 'filteredItems', userData);
-
+    
     useEffect(() => {
         setFilteredItems(() => {
             return userData.filter((item: any) => {
@@ -83,7 +82,7 @@ const State = () => {
             const update = await axios.put(`${config.API_BASE_URL}/client/${params.client_id}`, params);
             console.log(update, 'lets checck');
         } else {
-            delete params.country_name
+            delete params.country_name;
             let data = await axios.post(`${config.API_BASE_URL}/location/states`, params);
             data.status === 201 ? showMessage('state has been saved successfully.') : '';
             setAddContactModal(false);
@@ -132,25 +131,38 @@ const State = () => {
         });
     };
     const validationSchema = Yup.object().shape({
-    
         state_name: Yup.string().required('State Name is required'),
         country_name: Yup.string().required('Country Name is required'),
-
-        
     });
     const initialValues = {
         country_id: '',
         state_name: '',
-        country_name : ""
     };
     const formik = useFormik({
         initialValues: initialValues,
         validationSchema: validationSchema,
-        onSubmit: (values) => {
+        onSubmit: async (values) => {
             // Handle form submission logic here
-            console.log(values);
+            let data = await axios.post(`${config.API_BASE_URL}/location/states`, values);
+            data.status === 201 ? showMessage('state has been saved successfully.') : '';
+            setAddContactModal(false);
+            console.log(values, 'formik values');
         },
     });
+
+    const temp =  async ()=>{
+        try {
+            let data = await axios.post(`${config.API_BASE_URL}/location/states`, formik.values);
+            data.status === 201 ? showMessage('state has been saved successfully.') : '';
+            setAddContactModal(false);
+            console.log(formik.values, 'formik values');
+        } catch (error) {
+            
+        }
+    }
+
+  
+
 
     return (
         <div>
@@ -200,8 +212,8 @@ const State = () => {
                                     return (
                                         <tr key={contact.id}>
                                             <td className="whitespace-nowrap">{contact.state_id}</td>
-                                            <td className="whitespace-nowrap">{contact.country.country_name ? contact.country.country_name : "" }</td>
-                                            <td className="whitespace-nowrap">{contact.state_name ? contact.state_name  : ""}</td>
+                                            <td className="whitespace-nowrap">{contact.country.country_name ? contact.country.country_name : ''}</td>
+                                            <td className="whitespace-nowrap">{contact.state_name ? contact.state_name : ''}</td>
                                             <td>
                                                 <div className="flex gap-4 items-center justify-center">
                                                     <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => ViewUser(contact)}>
@@ -347,16 +359,18 @@ const State = () => {
                                                 <label htmlFor="ctnSelect2">Select Country</label>
                                                 <select
                                                     name="country_id"
-                                                    onChange={(e) => changeValue(e)}
+                                                    // onChange={(e) => changeValue(e)}
+                                                    onChange={formik.handleChange}
                                                     placeholder="Enter Country"
+                                                    value={formik.values.country_id}
                                                     onBlur={formik.handleBlur}
                                                     id="ctnSelect1"
                                                     className="form-select text-white-dark"
                                                     required
                                                 >
                                                     <option>Select Country</option>
-                                                    {CountryData.map((country : any) => (
-                                                        <option key={country.country_id} value={params.country_id = country.country_id}>
+                                                    {CountryData.map((country: any) => (
+                                                        <option key={country.country_id} value={country.country_id}>
                                                             {country.country_name}
                                                         </option>
                                                     ))}
@@ -374,7 +388,7 @@ const State = () => {
                                                     value={formik.values.state_name}
                                                     placeholder="Enter State Name"
                                                     className="form-input"
-                                                    required                             
+                                                    required
                                                 />
                                                 {formik.touched.state_name && formik.errors.state_name && <div className="text-red-500 text-sm">{formik.errors.state_name}</div>}
                                             </div>
@@ -384,10 +398,10 @@ const State = () => {
                                                     <button type="button" className="btn btn-outline-danger" onClick={() => setAddContactModal(false)}>
                                                         Cancel
                                                     </button>
-                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={saveUser}>
-                                                        {params.state_id ? 'Update' : 'Submit'}
+                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={temp}>
+                                                        {params.driver_id ? 'Update' : 'Submit'}
                                                     </button>
-                                                    <button type="button" onClick={formik.handleReset} className="btn btn-danger ltr:ml-4 rtl:mr-4" >
+                                                    <button type="button" onClick={formik.handleReset} className="btn btn-danger ltr:ml-4 rtl:mr-4">
                                                         Reset
                                                     </button>
                                                 </div>

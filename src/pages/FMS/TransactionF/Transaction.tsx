@@ -36,20 +36,30 @@ const Transaction = () => {
         cheqe_number: '',
     });
     const [userData, setUserData] = useState<any>([]);
+    const [bookingData, setBookingData] = useState<any>([]);
     const [isLoading, setIsLoading] = useState<any>(true);
     const [opened, { open, close }] = useDisclosure(false);
 
     const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
     const [addContactModal, setAddContactModal] = useState<any>(false);
     const [viewContactModal, setViewContactModal] = useState<any>(false);
+
+    const [currentDate, setCurrentDate] = useState(getFormattedDate());
+
+    // Helper function to get the current date in "YYYY-MM-DD" format
+    
     useEffect(() => {
         dispatch(setPageTitle('Contacts'));
         const fetch = async () => {
-            const responce = await axios.get(`${config.API_BASE_URL}/drivers`);
-            console.log(responce.data);
-
-            setUserData(responce.data);
-            console.log(userData);
+            const { data } = await axios.get(`${config.API_BASE_URL}/bookings?payment_status=unpaid`);
+            console.log(data.data, '0000000000000000000000000000000');
+            
+            setUserData(data.data);
+            const responce = await axios.get(`${config.API_BASE_URL}/transactions`);
+            console.log(responce.data, 'responce>>>>>>>>>>>>>>>>>>>');
+            setBookingData(responce.data)
+            console.log(bookingData);
+            
         };
         fetch();
     }, [addContactModal]);
@@ -74,7 +84,7 @@ const Transaction = () => {
     useEffect(() => {
         setFilteredItems(() => {
             return userData.filter((item: any) => {
-                return item.name.toLowerCase().includes(search.toLowerCase());
+                return item.payment_status.toLowerCase().includes(search.toLowerCase());
             });
         });
     }, [search, contactList, userData]);
@@ -196,7 +206,7 @@ const Transaction = () => {
         ammount_to_driver: Yup.string().required('Ammout To Driver is required'),
         mode: Yup.string().required('Mode is required'),
         cheqe_number: Yup.string().required('Cheque Number is required'),
-        driver_name:Yup.string().required('Driver Name is required')
+        driver_name: Yup.string().required('Driver Name is required'),
     });
 
     const initialValues = {
@@ -215,11 +225,34 @@ const Transaction = () => {
     const formik = useFormik({
         initialValues: initialValues,
         validationSchema: validationSchema,
-        onSubmit: (values) => {
+        onSubmit: async (values) => {
+            const trasction = await axios.post(`${config.API_BASE_URL},${values}`)
+            
             // Handle form submission logic here
-            console.log(values);
         },
     });
+    
+    const saveUser = async (e : any)=>{
+        console.log(formik.values);
+        
+        const trasction = await axios.post(`${config.API_BASE_URL}/transactions`,formik.values)
+        console.log( trasction , e , "....................................");
+        if(trasction.status === 201) {
+            setViewContactModal(false);
+            showMessage('transactions has been saved successfully.');
+        }
+        e.preventDefault()
+
+    }
+
+    function getFormattedDate() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+     
+        return `${year}-${month}-${day}`;
+    }
 
     return (
         <div>
@@ -270,34 +303,21 @@ const Transaction = () => {
                                     <th>Driver Name</th>
                                     <th>Amount</th>
                                     <th>mode</th>
-                                    <th>Action</th>
+                                    <th className="!text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredItems.map((contact: any) => {
+                                {bookingData.map((contact: any , index : any) => {
                                     return (
                                         <tr key={contact.id}>
-                                            <td>
-                                                <div className="flex items-center w-max">
-                                                    {contact.path && (
-                                                        <div className="w-max">
-                                                            <img src={`/assets/images/${contact.path}`} className="h-8 w-8 rounded-full object-cover ltr:mr-2 rtl:ml-2" alt="avatar" />
-                                                        </div>
-                                                    )}
-                                                    {!contact.path && contact.company_name && (
-                                                        <div className="grid place-content-center h-8 w-8 ltr:mr-2 rtl:ml-2 rounded-full bg-primary text-white text-sm font-semibold"></div>
-                                                    )}
-                                                    {!contact.path && !contact.company_name && (
-                                                        <div className="border border-gray-300 dark:border-gray-800 rounded-full p-2 ltr:mr-2 rtl:ml-2">
-                                                            <IconUser className="w-4.5 h-4.5" />
-                                                        </div>
-                                                    )}
-                                                    <div>{contact.name}</div>
-                                                </div>
-                                            </td>
-                                            <td className="whitespace-nowrap">{contact.contactNumber}</td>
-                                            <td className="whitespace-nowrap">{contact.email}</td>
-                                            <td className="whitespace-nowrap">{contact.status}</td>
+                                            
+                                            <td className="whitespace-nowrap">{index === 0 ? 1 : index + 1}</td>
+                                            <td className="whitespace-nowrap">{contact.transaction_id}</td>
+                                            <td className="whitespace-nowrap">{contact.date}</td>
+                                            <td className="whitespace-nowrap">{contact.bookings}</td>
+                                            <td className="whitespace-nowrap">{contact.driver_name}</td>
+                                            <td className="whitespace-nowrap">{contact.payable_ammount}</td>
+                                            <td className="whitespace-nowrap">{contact.mode}</td>
                                             <td>
                                                 <div className="flex gap-4 items-center justify-center">
                                                     <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => ViewUser(contact)}>
@@ -438,7 +458,7 @@ const Transaction = () => {
                                         {params.client ? 'Edit Transaction' : 'Add Transaction'}
                                     </div>
                                     <div className="p-5">
-                                        <form onSubmit={formik.handleSubmit}>
+                                        <form >
                                             <div>
                                                 <label htmlFor="routename">Transaction Id</label>
                                                 <input
@@ -452,17 +472,40 @@ const Transaction = () => {
                                                     className="form-input"
                                                     required
                                                 />
-                                                 {formik.touched.transaction_id && formik.errors.transaction_id && <div className="text-red-500 text-sm">{formik.errors.transaction_id}</div>}
+                                                {formik.touched.transaction_id && formik.errors.transaction_id && <div className="text-red-500 text-sm">{formik.errors.transaction_id}</div>}
                                             </div>
                                             <div className="mt-4">
                                                 <div>
                                                     <label htmlFor="routename">Select Bookings</label>
-                                                    <select name="bookings"  onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur} value={formik.values.bookings} className="form-select text-white-dark" required>
+                                                    <select
+                                                        name="bookings"
+                                                        onChange={(e) => {
+                                                            formik.values.bookings = e.target.value;
+                                                            userData.map((v: any) => {
+                                                                if (v.new_booking_id === formik.values.bookings) {
+                                                                    formik.values.route_name = v.border_Route.route_name;
+                                                                    formik.values.origin = v.border_Route.Booking_origin_Country.country_name;
+                                                                    formik.values.destination = v.border_Route.Booking_destination_Country.country_name;
+                                                                    formik.values.driver_name = v.driver.name 
+                                                                    formik.values.payable_ammount =  v.total_ammount
+                                                                    formik.values.ammount_to_driver = v.ammount_to_driver 
+                                                                    formik.values.date = new Date().toLocaleString()
+                                                                }
+                                                            });
+                                                            formik.handleChange(e)
+                                                        }}
+                                                        onBlur={formik.handleBlur}
+                                                        value={formik.values.bookings}
+                                                        className="form-select text-white-dark"
+                                                    
+                                                        required
+                                                    >
                                                         <option value="">Select Bookings</option>
-                                                        <option value="c1">b1</option>
-                                                        <option value="c2">b2</option>
-                                                        <option value="c3">b3</option>
+                                                        {userData.map((booking_: any) => (
+                                                            <option key={booking_.route_id} value={booking_.new_booking_id}>
+                                                                {booking_.new_booking_id}
+                                                            </option>
+                                                        ))}
                                                     </select>
                                                     {formik.touched.bookings && formik.errors.bookings && <div className="text-red-500 text-sm">{formik.errors.bookings}</div>}
                                                 </div>
@@ -476,13 +519,13 @@ const Transaction = () => {
                                                         type="date"
                                                         name="date"
                                                         onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur}
-                                                        value={formik.values.date}
+                                                        onBlur={formik.handleBlur}
+                                                        value={currentDate}
                                                         placeholder="--/--/--"
                                                         className="form-input"
                                                         required
                                                     />
-                                                     {formik.touched.date && formik.errors.date && <div className="text-red-500 text-sm">{formik.errors.date}</div>}
+                                                    {formik.touched.date && formik.errors.date && <div className="text-red-500 text-sm">{formik.errors.date}</div>}
                                                 </div>
                                                 <div>
                                                     <label htmlFor="routename">Route Name</label>
@@ -491,13 +534,14 @@ const Transaction = () => {
                                                         type="text"
                                                         name="route_name"
                                                         onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur}
+                                                        onBlur={formik.handleBlur}
                                                         value={formik.values.route_name}
                                                         placeholder="Enter Route Name"
                                                         className="form-input"
                                                         required
+                                                        readOnly
                                                     />
-                                                     {formik.touched.route_name && formik.errors.route_name && <div className="text-red-500 text-sm">{formik.errors.route_name}</div>}
+                                                    {formik.touched.route_name && formik.errors.route_name && <div className="text-red-500 text-sm">{formik.errors.route_name}</div>}
                                                 </div>
                                             </div>
 
@@ -512,8 +556,9 @@ const Transaction = () => {
                                                         placeholder="Enter Origin"
                                                         className="form-input text-white-dark"
                                                         required
+                                                        readOnly
                                                     ></input>
-                                                     {formik.touched.origin && formik.errors.origin && <div className="text-red-500 text-sm">{formik.errors.origin}</div>}
+                                                    {formik.touched.origin && formik.errors.origin && <div className="text-red-500 text-sm">{formik.errors.origin}</div>}
                                                 </div>
                                             </div>
                                             <div className="mt-4">
@@ -527,8 +572,9 @@ const Transaction = () => {
                                                         placeholder="Enter Destination"
                                                         className="form-input text-white-dark"
                                                         required
+                                                        readOnly
                                                     ></input>
-                                                     {formik.touched.destination && formik.errors.destination && <div className="text-red-500 text-sm">{formik.errors.destination}</div>}
+                                                    {formik.touched.destination && formik.errors.destination && <div className="text-red-500 text-sm">{formik.errors.destination}</div>}
                                                 </div>
                                             </div>
                                             <div className="mt-4">
@@ -544,8 +590,9 @@ const Transaction = () => {
                                                         placeholder="Enter Driver Name"
                                                         className="form-input"
                                                         required
+                                                        readOnly
                                                     />
-                                                     {formik.touched.driver_name && formik.errors.driver_name && <div className="text-red-500 text-sm">{formik.errors.driver_name}</div>}
+                                                    {formik.touched.driver_name && formik.errors.driver_name && <div className="text-red-500 text-sm">{formik.errors.driver_name}</div>}
                                                 </div>
                                             </div>
 
@@ -562,8 +609,9 @@ const Transaction = () => {
                                                         placeholder="Enter Amount"
                                                         className="form-input"
                                                         required
+                                                        readOnly
                                                     />
-                                                     {formik.touched.payable_ammount && formik.errors.payable_ammount && <div className="text-red-500 text-sm">{formik.errors.payable_ammount}</div>}
+                                                    {formik.touched.payable_ammount && formik.errors.payable_ammount && <div className="text-red-500 text-sm">{formik.errors.payable_ammount}</div>}
                                                 </div>
                                             </div>
                                             <div className="mt-4">
@@ -579,41 +627,54 @@ const Transaction = () => {
                                                         placeholder="Enter Amount To Driver"
                                                         className="form-input"
                                                         required
+                                                        readOnly
                                                     />
-                                                     {formik.touched.ammount_to_driver && formik.errors.ammount_to_driver && <div className="text-red-500 text-sm">{formik.errors.ammount_to_driver}</div>}
+                                                    {formik.touched.ammount_to_driver && formik.errors.ammount_to_driver && (
+                                                        <div className="text-red-500 text-sm">{formik.errors.ammount_to_driver}</div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="mt-4">
-                                                <div>
-                                                    <label htmlFor="routename">mode</label>
-                                                    <input
+                                            <div>
+                                                    <label htmlFor="routename">Select Bookings</label>
+                                                    <select
                                                         name="mode"
                                                         onChange={formik.handleChange}
                                                         onBlur={formik.handleBlur}
                                                         value={formik.values.mode}
-                                                        placeholder="Enter Mode"
-                                                        className="form-input text-white-dark"
+                                                        className="form-select text-white-dark"
+                                                    
                                                         required
-                                                    ></input>
-                                                     {formik.touched.mode && formik.errors.mode && <div className="text-red-500 text-sm">{formik.errors.mode}</div>}
+                                                    >
+                                                        <option value="">Select payment mode</option>
+                                                            <option value="cash"> cash</option>
+                                                            <option value="check"> check</option>
+                                                            <option value="wire"> wire</option>
+                                                        
+                                                    </select>
+                                                    {/* {formik.touched.bookings && formik.errors.bookings && <div className="text-red-500 text-sm">{formik.errors.bookings}</div>} */}
+                                                    {formik.touched.mode && formik.errors.mode && <div className="text-red-500 text-sm">{formik.errors.mode}</div>}
                                                 </div>
                                             </div>
                                             <div className="mt-4">
-                                                <div>
-                                                    <label htmlFor="routename">Cheque Number</label>
-                                                    <input
-                                                        id="payable_ammount"
-                                                        type="number"
-                                                        name="cheqe_number"
-                                                        onChange={formik.handleChange}
-                                                        onBlur={formik.handleBlur}
-                                                        value={formik.values.cheqe_number}
-                                                        placeholder="Enter Cheque Number"
-                                                        className="form-input"
-                                                        required
-                                                    />
-                                                      {formik.touched.cheqe_number && formik.errors.cheqe_number && <div className="text-red-500 text-sm">{formik.errors.cheqe_number}</div>}
-                                                </div>
+                                                {formik.values.mode != "cash" 
+                                            ? <div>
+                                            <label htmlFor="routename">Cheque Number / Ref No</label>
+                                            <input
+                                                id="payable_ammount"
+                                                type="number"
+                                                name="cheqe_number"
+                                                onChange={formik.handleChange}
+                                                onBlur={formik.handleBlur}
+                                                value={formik.values.cheqe_number}
+                                                placeholder="Enter Cheque Number / ref No"
+                                                className="form-input"
+                                                required
+                                            />
+                                            {formik.touched.cheqe_number && formik.errors.cheqe_number && <div className="text-red-500 text-sm">{formik.errors.cheqe_number}</div>}
+                                        </div>    
+                                            : ""
+                                            }
                                             </div>
 
                                             {!viewContactModal && (
@@ -621,7 +682,7 @@ const Transaction = () => {
                                                     <button type="button" className="btn btn-outline-danger" onClick={() => setAddContactModal(false)}>
                                                         Cancel
                                                     </button>
-                                                    <button type="submit" className="btn btn-primary ltr:ml-4 rtl:mr-4" >
+                                                    <button type="submit" onClick={(v)=>saveUser(v)} className="btn btn-primary ltr:ml-4 rtl:mr-4">
                                                         {params.driver_id ? 'Update' : 'Submit'}
                                                     </button>
                                                 </div>

@@ -156,9 +156,20 @@ const Country = () => {
     const formik = useFormik({
         initialValues: initialValues,
         validationSchema: validationSchema,
-        onSubmit: (values) => {
+        onSubmit: async (values) => {
             // Handle form submission logic here
-            console.log('formik values', values);
+            try {
+                let data = await axios.post(`${config.API_BASE_URL}/location/countries`, values);
+                data.status === 201 ? showMessage('country has been saved successfully.') 
+                : console.log(data , "lets checks");
+                
+                setAddContactModal(false);
+                console.log('formik values', values);
+            } catch (error : any) {
+                console.log(error.response.data.message, "errrrrr");
+                showMessage(`${error.response.data.message.company_name}.`)
+                
+            }
         },
     });
 
